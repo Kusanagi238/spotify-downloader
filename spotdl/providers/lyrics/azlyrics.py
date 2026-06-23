@@ -77,18 +77,36 @@ class AzLyrics(LyricsProvider):
             return {}
 
         results = {}
+        from bs4 import Tag
+
         for td_tag in td_tags:
-            a_tags = td_tag.find_all("a", href=True)
-            if len(a_tags) == 0:
+            # Ensure td_tag is a Tag before calling Tag-specific methods
+            if not isinstance(td_tag, Tag):
                 continue
 
-            a_tag = a_tags[0]
-            url = a_tag["href"].strip()
+            a_tags = td_tag.find_all("a", href=True)
+            # Find the first Tag instance in a_tags
+            first_a = next((a for a in a_tags if isinstance(a, Tag)), None)
+            if first_a is None:
+                continue
+
+            url = first_a.get("href")
+            if not url:
+                continue
+
+            url = url.strip()
             if url == "":
                 continue
 
-            title = td_tag.find("span").get_text().strip()
-            artist = td_tag.find("b").get_text().strip()
+            span_tag = td_tag.find("span")
+            if not isinstance(span_tag, Tag):
+                continue
+            title = span_tag.get_text().strip()
+
+            b_tag = td_tag.find("b")
+            if not isinstance(b_tag, Tag):
+                continue
+            artist = b_tag.get_text().strip()
 
             results[f"{artist} - {title}"] = url
 
